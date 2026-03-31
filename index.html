@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SportBrain</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Metal / granite palette */
+  --bg: #111213;           /* тёмный металл */
+  --sf: #18191b;           /* поверхность */
+  --s2: #1e1f22;           /* поверхность 2 */
+  --br: #2a2b2e;           /* граница */
+  --br2: #333539;          /* граница акцент */
+
+  --ac: #d4a843;           /* медь/латунь — главный акцент */
+  --ad: rgba(212,168,67,.1);
+  --ab: rgba(212,168,67,.28);
+
+  --or: #b85c38;           /* ржавчина */
+  --pu: #7c5cbf;           /* тёмный фиолет */
+  --re: #c0392b;           /* тёмный красный */
+  --am: #c49a2a;           /* янтарь */
+  --bl: #3a7bd5;
+
+  --tx: #c8c9cc;           /* основной текст — не белый */
+  --tx2: #e8e9ec;          /* заголовки — чуть ярче */
+  --sb: #565860;           /* второстепенный */
+  --mt: #383a3e;           /* приглушённый */
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:var(--bg); color:var(--tx); font-family:'JetBrains Mono',monospace; min-height:100vh; }
+#app { max-width:430px; min-height:100vh; margin:0 auto; display:flex; flex-direction:column; position:relative;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 3px),
+    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255,255,255,.01) 4px, rgba(255,255,255,.01) 5px),
+    linear-gradient(160deg, #161718 0%, #111213 40%, #13120f 100%);
+}
+#screen { flex:1; overflow-y:auto; overflow-x:hidden; padding:16px 20px 100px; }
+.fadein { animation: fadein .2s ease; }
+@keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* NAV */
+.nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:rgba(17,18,19,.98); border-top:1px solid var(--br); display:flex; padding:10px 0 20px; z-index:100; }
+.nav button { flex:1; background:none; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--mt); transition:color .2s; padding:4px 0; }
+.nav button.active { color:var(--ac); text-shadow:0 0 8px rgba(212,168,67,.4); }
+.nav button .icon { font-size:20px; line-height:1; display:flex; align-items:center; justify-content:center; width:24px; height:24px; }
+.nav button .icon svg { width:22px; height:22px; }
+.nav button .label2 { font-size:9px; letter-spacing:1px; font-family:'JetBrains Mono',monospace; }
+
+/* TYPOGRAPHY */
+.lbl { font-size:9px; letter-spacing:3px; color:var(--sb); margin-bottom:6px; display:block; }
+.ttl { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:1px; line-height:1; color:var(--tx2); }
+
+/* CARDS */
+.card { background:var(--sf); border:1px solid var(--br); border-top:1px solid var(--br2); border-radius:14px; padding:16px; margin-bottom:12px; }
+.card-sm { background:var(--sf); border:1px solid var(--br); border-top:1px solid var(--br2); border-radius:10px; padding:12px 14px; }
+
+/* BUTTONS */
+.btn { border:none; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:transform .1s; }
+.btn:active { transform:scale(.97); }
+.btn-accent { background:var(--ac); color:#000; padding:12px 20px; }
+.btn-surface { background:var(--s2); color:var(--sb); border:1px solid var(--br); padding:10px 14px; }
+.btn-ghost { background:transparent; color:var(--sb); border:1px solid var(--br); padding:8px 12px; }
+.btn-full { width:100%; padding:14px; border-radius:12px; font-size:14px; }
+
+/* SET TYPE BADGES */
+.stb { padding:3px 0; border-radius:6px; text-align:center; font-size:8px; letter-spacing:.5px; cursor:pointer; user-select:none; border:1px solid transparent; transition:all .15s; }
+.stb-work   { background:var(--ad); border-color:var(--ab); color:var(--ac); font-weight:700; }
+.stb-warmup { background:#1a1a1a; border-color:#222; color:var(--sb); }
+.stb-leadup { background:rgba(196,154,42,.1); border-color:rgba(196,154,42,.28); color:var(--am); }
+
+/* CHIPS */
+.chip { padding:7px 14px; border-radius:20px; border:1px solid var(--br); background:var(--sf); color:var(--mt); font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; display:inline-flex; align-items:center; gap:6px; }
+.chip.active { border-color:var(--ac); background:var(--ad); color:var(--ac); }
+
+/* PROGRESS BAR */
+.pbar { height:5px; background:#1a1a1a; border-radius:3px; overflow:hidden; }
+.pfil { height:100%; background:linear-gradient(90deg, #d4a843, #a07830); border-radius:3px; }
+
+/* WEEK GRID */
+.wgrid { display:flex; gap:5px; }
+.wday { flex:1; text-align:center; }
+.wblock { height:38px; border-radius:8px; margin-bottom:4px; display:flex; align-items:center; justify-content:center; border:1px solid var(--br); font-size:13px; }
+
+/* TOGGLE */
+.tgl { width:42px; height:24px; border-radius:12px; position:relative; cursor:pointer; flex-shrink:0; }
+.tknob { width:18px; height:18px; border-radius:50%; position:absolute; top:3px; left:3px; transition:left .2s; }
+
+/* NUMBER CONTROL */
+.nctrl { display:flex; align-items:center; gap:2px; }
+.ncbtn { background:#1a1a1a; border:none; color:var(--sb); border-radius:5px; width:20px; height:28px; cursor:pointer; font-size:16px; font-family:'JetBrains Mono',monospace; display:flex; align-items:center; justify-content:center; }
+.ninput { background:var(--s2); border:1px solid var(--br); border-radius:8px; color:var(--tx2); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; text-align:center; width:100%; padding:5px 2px; outline:none; }
+.ninput:focus { border-color:var(--ac); }
+
+/* DOTS */
+.dots { display:flex; justify-content:center; gap:6px; margin-top:16px; }
+.dot { height:8px; border-radius:4px; border:none; cursor:pointer; padding:0; transition:all .2s; }
+.dot-active { width:20px; background:var(--ac); }
+.dot-done   { width:8px;  background:rgba(200,255,0,.35); }
+.dot-idle   { width:8px;  background:var(--mt); }
+
+/* SELECT */
+select { background:var(--s2); border:1px solid var(--br); border-radius:8px; color:var(--tx2); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; padding:5px 4px; cursor:pointer; outline:none; }
+select:focus { border-color:var(--ac); }
+select option { background:#1a1a1a; }
+
+/* MODAL */
+.modal-wrap { position:fixed; inset:0; background:rgba(0,0,0,.93); z-index:200; display:flex; flex-direction:column; max-width:430px; left:50%; transform:translateX(-50%); animation:fadein .18s ease; }
+.modal-hdr { display:flex; justify-content:space-between; align-items:center; padding:20px 20px 0; margin-bottom:16px; }
+.modal-body { flex:1; overflow-y:auto; padding:0 20px 20px; }
+.modal-close { background:var(--s2); border:1px solid var(--br); border-radius:8px; padding:6px 12px; color:var(--sb); cursor:pointer; font-size:16px; font-family:'JetBrains Mono',monospace; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#222; border-radius:2px; }
+
+textarea { background:#111; border:1px solid var(--br); border-radius:12px; color:var(--tx2); font-family:'JetBrains Mono',monospace; font-size:13px; padding:12px 14px; outline:none; resize:none; width:100%; line-height:1.6; }
+textarea:focus { border-color:var(--ac); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen"></div>
+  <nav class="nav">
+    <button id="nav-workout" class="active" onclick="App.nav('workout')">
+      <span class="icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4v6M6 14v6M18 4v6M18 14v6M2 9h4M14 9h4M2 15h4M14 15h4M10 9v6"/>
+        </svg>
+      </span>
+      <span class="label2">ТРЕНИРОВКА</span>
+    </button>
+    <button id="nav-home" onclick="App.nav('home')">
+      <span class="icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
+          <path d="M9 21V12h6v9"/>
+        </svg>
+      </span>
+      <span class="label2">ГЛАВНАЯ</span>
+    </button>
+    <button id="nav-programs" onclick="App.nav('programs')">
+      <span class="icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="9" y1="13" x2="15" y2="13"/>
+          <line x1="9" y1="17" x2="13" y2="17"/>
+        </svg>
+      </span>
+      <span class="label2">ПРОГРАММЫ</span>
+    </button>
+    <button id="nav-bio" onclick="App.nav('bio')">
+      <span class="icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="7" y="2" width="10" height="5" rx="2"/>
+          <path d="M12 7v4M8 11h8a2 2 0 012 2v1a4 4 0 01-4 4H10a4 4 0 01-4-4v-1a2 2 0 012-2z"/>
+          <path d="M10 18v3M14 18v3"/>
+        </svg>
+      </span>
+      <span class="label2">БИОХАКИНГ</span>
+    </button>
+  </nav>
+  <div id="modal-root"></div>
+</div>
+
+<script>
+// ─────────────── DATA ───────────────
+const MUSCLES = ["Грудь","Бицепс","Трицепс","Спина","Плечи","Ноги","Пресс"];
+
+// ── СНАРЯДЫ ──
+const EQUIPMENT_LIST = [
+  {id:"barbell",        name:"Штанга"},
+  {id:"ez",             name:"EZ-гриф"},
+  {id:"dumbbells",      name:"Гантели"},
+  {id:"hammer",         name:"Хаммер"},
+  {id:"butterfly",      name:"Бабочка"},
+  {id:"cable_rope",     name:"Блок — канат"},
+  {id:"cable_straight", name:"Блок — прямая"},
+  {id:"cable_v",        name:"Блок — V"},
+  {id:"cable_single",   name:"Блок — одиночный"},
+  {id:"cable_wide",     name:"Блок — широкий"},
+  {id:"cable_narrow",   name:"Блок — узкий"},
+  {id:"smith",          name:"Смит"},
+  {id:"scott",          name:"Скамья Скотта"},
+  {id:"leg_press_eq",   name:"Платформа"},
+  {id:"hack",           name:"Гак-машина"},
+  {id:"bodyweight",     name:"Собств. вес"},
+  {id:"dip_bars",       name:"Брусья"},
+  {id:"pullup_bar",     name:"Турник"},
+];
+
+const GRIPS_LIST = [
+  {id:"straight", name:"Прямой"},
+  {id:"reverse",  name:"Обратный"},
+  {id:"narrow",   name:"Узкий"},
+  {id:"medium",   name:"Средний"},
+  {id:"wide",     name:"Широкий"},
+  {id:"neutral",  name:"Нейтральный"},
+];
+
+const TUT_LIST = [
+  {id:"normal",    name:"Без паузы"},
+  {id:"pause1",    name:"Пауза 1 сек"},
+  {id:"pause3",    name:"Пауза 3 сек"},
+  {id:"negative3", name:"Негатив 3 сек"},
+  {id:"slow",      name:"Медленно 4-0-4"},
+];
+
+const RPE_OPTIONS = [5,6,7,8,9,10];
+const STIMS = TUT_LIST.map(t => t.name);
+
+const EXERCISES = {
+  "Грудь": [
+    {id:"bench_press",   name:"Жим лёжа",                 last:5,  prev:{w:100,r:5,s:4},  equip:["barbell","dumbbells","smith"],                        grips:["narrow","medium","wide"],                    notes:"Узкий — трицепс, широкий — грудь"},
+    {id:"incline_press", name:"Жим наклонный",            last:35, prev:{w:85,r:8,s:3},   equip:["barbell","dumbbells","smith","hammer"],               grips:["narrow","medium","wide"],                    notes:"Угол 30–45°, акцент верхняя грудь"},
+    {id:"decline_press", name:"Жим под углом вниз",       last:60, prev:{w:90,r:8,s:3},   equip:["barbell","dumbbells","smith"],                        grips:["medium","wide"],                             notes:"Нижняя часть груди"},
+    {id:"hammer_chest",  name:"Хаммер грудь",             last:20, prev:{w:80,r:10,s:3},  equip:["hammer"],                                            grips:["neutral"],                                   notes:"Нейтральный хват — меньше нагрузки на плечи"},
+    {id:"butterfly",     name:"Бабочка",                  last:14, prev:{w:60,r:12,s:3},  equip:["butterfly"],                                         grips:["neutral"],                                   notes:"Изоляция. Не разводи слишком широко"},
+    {id:"cable_cross",   name:"Кроссовер на блоке",       last:42, prev:{w:20,r:12,s:3},  equip:["cable_single"],                                      grips:["straight","neutral"],                        notes:"Снизу — нижняя грудь, сверху — верхняя"},
+    {id:"dips_chest",    name:"Отжимания на брусьях",     last:8,  prev:{w:20,r:10,s:3},  equip:["dip_bars"],                                          grips:["neutral"],                                   notes:"Наклон вперёд — акцент грудь"},
+    {id:"pushup",        name:"Отжимания от пола",        last:30, prev:{w:0,r:20,s:3},   equip:["bodyweight"],                                        grips:["narrow","medium","wide"],                    notes:"Широкая — грудь, узкая — трицепс"},
+    {id:"dumbbell_fly",  name:"Разведения гантелей",      last:25, prev:{w:18,r:12,s:3},  equip:["dumbbells"],                                         grips:["neutral"],                                   notes:"Изоляция. Лёгкий сгиб в локтях"},
+    {id:"cable_fly",     name:"Разведения на блоке",      last:50, prev:{w:15,r:12,s:3},  equip:["cable_single"],                                      grips:["straight","neutral"],                        notes:"Постоянное напряжение по всей амплитуде"},
+  ],
+  "Спина": [
+    {id:"pullup",        name:"Подтягивания",              last:7,  prev:{w:20,r:6,s:4},   equip:["pullup_bar"],                                        grips:["narrow","medium","wide","reverse","neutral"], notes:"Широкий — широчайшие, обратный — бицепс"},
+    {id:"lat_pulldown",  name:"Тяга блока вертикальная",  last:10, prev:{w:70,r:8,s:4},   equip:["cable_wide","cable_narrow","cable_v","cable_rope","cable_straight"], grips:["wide","narrow","neutral","reverse"], notes:"Аналог подтягиваний на блоке"},
+    {id:"seated_row",    name:"Тяга блока горизонтальная",last:45, prev:{w:65,r:10,s:3},  equip:["cable_v","cable_straight","cable_wide","cable_rope"], grips:["narrow","medium","wide","neutral"],          notes:"V-рукоять — середина спины"},
+    {id:"barbell_row",   name:"Тяга штанги в наклоне",    last:11, prev:{w:90,r:6,s:4},   equip:["barbell","ez"],                                      grips:["straight","reverse","medium","wide"],        notes:"Прямой — трапеция, обратный — широчайшие"},
+    {id:"dumbbell_row",  name:"Тяга гантели в наклоне",   last:18, prev:{w:38,r:10,s:3},  equip:["dumbbells"],                                         grips:["neutral"],                                   notes:"Большая амплитуда, хорошая растяжка"},
+    {id:"hammer_row",    name:"Хаммер тяга к поясу",      last:22, prev:{w:80,r:10,s:3},  equip:["hammer"],                                            grips:["neutral"],                                   notes:"Нейтральный хват, меньше нагрузки на запястья"},
+    {id:"tbar_row",      name:"Тяга Т-штанги",            last:35, prev:{w:80,r:8,s:4},   equip:["barbell"],                                           grips:["narrow","medium","wide"],                    notes:"Акцент на среднюю часть спины"},
+    {id:"deadlift",      name:"Становая тяга",            last:9,  prev:{w:160,r:5,s:3},  equip:["barbell"],                                           grips:["straight","reverse","medium"],               notes:"Разнохват — можно взять больше веса"},
+    {id:"romanian_dl",   name:"Румынская тяга",           last:20, prev:{w:100,r:10,s:3}, equip:["barbell","dumbbells"],                               grips:["straight","medium"],                         notes:"Бицепс бедра и поясница"},
+    {id:"hyperextension",name:"Гиперэкстензия",           last:22, prev:{w:30,r:15,s:3},  equip:["bodyweight","barbell"],                              grips:["neutral"],                                   notes:"Не переразгибай в верхней точке"},
+    {id:"face_pull",     name:"Тяга к лицу",              last:55, prev:{w:20,r:15,s:3},  equip:["cable_rope"],                                        grips:["neutral"],                                   notes:"Задние дельты и ротаторы. Важно для плеч"},
+  ],
+  "Бицепс": [
+    {id:"barbell_curl",  name:"Подъём штанги на бицепс",  last:10, prev:{w:50,r:8,s:3},   equip:["barbell","ez"],                                      grips:["straight","reverse","narrow","medium","wide"],notes:"EZ снижает нагрузку на запястья"},
+    {id:"dumbbell_curl", name:"Подъём гантелей на бицепс",last:7,  prev:{w:22,r:10,s:3},  equip:["dumbbells"],                                         grips:["straight","neutral","reverse"],               notes:"Супинация в верхней точке"},
+    {id:"hammer_curl",   name:"Молотки",                  last:6,  prev:{w:22,r:10,s:3},  equip:["dumbbells","cable_rope"],                            grips:["neutral"],                                   notes:"Брахиалис — толщина руки"},
+    {id:"conc_curl",     name:"Концентрированный подъём", last:38, prev:{w:16,r:12,s:3},  equip:["dumbbells"],                                         grips:["straight"],                                  notes:"Изоляция, нет читинга"},
+    {id:"scott_curl",    name:"Подъём на скамье Скотта",  last:30, prev:{w:35,r:10,s:3},  equip:["barbell","ez","dumbbells","cable_straight"],          grips:["straight","reverse","narrow","medium","wide"],notes:"Изолирует бицепс полностью"},
+    {id:"cable_curl",    name:"Подъём на блоке",          last:20, prev:{w:25,r:12,s:3},  equip:["cable_straight","cable_rope","cable_single"],         grips:["straight","neutral","reverse"],               notes:"Постоянное напряжение"},
+    {id:"incline_curl",  name:"Подъём на наклонной скамье",last:45,prev:{w:16,r:10,s:3}, equip:["dumbbells"],                                         grips:["straight","neutral"],                        notes:"Максимальное растяжение в нижней точке"},
+    {id:"reverse_curl",  name:"Подъём обратным хватом",   last:60, prev:{w:30,r:12,s:3},  equip:["barbell","ez","dumbbells"],                          grips:["reverse"],                                   notes:"Брахиалис и брахиорадиалис"},
+  ],
+  "Трицепс": [
+    {id:"close_grip",    name:"Жим узким хватом",         last:9,  prev:{w:70,r:8,s:3},   equip:["barbell","smith"],                                   grips:["narrow"],                                    notes:"Базовое. Руки чуть уже плеч"},
+    {id:"skull_crusher", name:"Французский жим",          last:50, prev:{w:35,r:10,s:3},  equip:["barbell","ez","dumbbells"],                          grips:["narrow","medium","neutral"],                 notes:"За голову — длинная головка"},
+    {id:"cable_pushdown",name:"Разгибание на блоке вниз", last:9,  prev:{w:40,r:12,s:3},  equip:["cable_straight","cable_v","cable_rope"],             grips:["straight","narrow","neutral"],               notes:"Канат — разворот рук внизу"},
+    {id:"overhead_ext",  name:"Разгибание над головой",   last:30, prev:{w:22,r:12,s:3},  equip:["dumbbells","barbell","ez","cable_rope"],             grips:["neutral","narrow"],                          notes:"Максимальное растяжение длинной головки"},
+    {id:"dips_tri",      name:"Брусья (трицепс)",         last:4,  prev:{w:10,r:12,s:3},  equip:["dip_bars","bodyweight"],                             grips:["neutral"],                                   notes:"Вертикальный корпус — акцент трицепс"},
+    {id:"kickback",      name:"Откат гантели",            last:33, prev:{w:14,r:12,s:3},  equip:["dumbbells","cable_single"],                          grips:["neutral"],                                   notes:"Локоть зафиксирован, полное разгибание"},
+    {id:"bench_dip",     name:"Обратные отжимания от скамьи",last:4,prev:{w:0,r:15,s:3}, equip:["bodyweight"],                                        grips:["neutral"],                                   notes:"Можно добавить отягощение на бёдра"},
+    {id:"single_pushdown",name:"Разгибание одной рукой",  last:40, prev:{w:15,r:12,s:3},  equip:["cable_single"],                                      grips:["straight","neutral","reverse"],               notes:"Исправление асимметрии"},
+  ],
+  "Плечи": [
+    {id:"ohp",           name:"Жим стоя / сидя",          last:14, prev:{w:60,r:6,s:4},   equip:["barbell","dumbbells","smith"],                       grips:["narrow","medium","wide"],                    notes:"Основное масс-строящее упражнение"},
+    {id:"arnold_press",  name:"Жим Арнольда",             last:25, prev:{w:24,r:10,s:3},  equip:["dumbbells"],                                         grips:["neutral"],                                   notes:"Ротация — все три пучка дельт"},
+    {id:"lateral_raise", name:"Махи в стороны",           last:4,  prev:{w:14,r:12,s:4},  equip:["dumbbells","cable_single"],                          grips:["neutral"],                                   notes:"Средние дельты. Небольшой наклон вперёд"},
+    {id:"front_raise",   name:"Махи вперёд",              last:55, prev:{w:10,r:12,s:3},  equip:["dumbbells","barbell","cable_straight"],               grips:["straight","neutral"],                        notes:"Передние дельты. Не выше уровня плеч"},
+    {id:"rear_delt",     name:"Махи назад",               last:36, prev:{w:12,r:15,s:3},  equip:["dumbbells","cable_single","butterfly"],               grips:["neutral"],                                   notes:"Задние дельты — критично для здоровья плеч"},
+    {id:"upright_row",   name:"Тяга к подбородку",        last:45, prev:{w:40,r:12,s:3},  equip:["barbell","ez","cable_straight"],                     grips:["narrow","medium"],                           notes:"Осторожно с шириной хвата"},
+    {id:"shrug",         name:"Шраги",                    last:20, prev:{w:100,r:12,s:3}, equip:["barbell","dumbbells","hammer"],                       grips:["straight","neutral"],                        notes:"Трапеция. Задержка в верхней точке"},
+    {id:"cable_lateral", name:"Махи в стороны на блоке",  last:18, prev:{w:12,r:15,s:3},  equip:["cable_single"],                                      grips:["straight"],                                  notes:"Постоянное напряжение"},
+  ],
+  "Ноги": [
+    {id:"squat",         name:"Присед со штангой",        last:7,  prev:{w:140,r:5,s:4},  equip:["barbell","smith"],                                   grips:["medium","wide"],                             notes:"Узкая — квадрицепс, широкая — ягодицы"},
+    {id:"front_squat",   name:"Фронтальный присед",       last:60, prev:{w:100,r:5,s:3},  equip:["barbell"],                                           grips:["medium"],                                    notes:"Акцент на квадрицепс"},
+    {id:"leg_press",     name:"Жим ногами",               last:12, prev:{w:200,r:10,s:3}, equip:["leg_press_eq"],                                      grips:[],                                            notes:"Высоко — ягодицы, низко — квадрицепс"},
+    {id:"hack_squat",    name:"Гак-присед",               last:40, prev:{w:120,r:10,s:3}, equip:["hack","barbell"],                                    grips:[],                                            notes:"Квадрицепс. Спина зафиксирована"},
+    {id:"leg_curl",      name:"Сгибание ног в тренажёре", last:25, prev:{w:50,r:12,s:3},  equip:["hammer"],                                            grips:[],                                            notes:"Изоляция бицепса бедра"},
+    {id:"leg_extension", name:"Разгибание ног в тренажёре",last:40,prev:{w:55,r:12,s:3}, equip:["hammer"],                                            grips:[],                                            notes:"Изоляция квадрицепса"},
+    {id:"lunge",         name:"Выпады",                   last:5,  prev:{w:40,r:10,s:3},  equip:["barbell","dumbbells","bodyweight"],                   grips:["neutral","straight"],                        notes:"Ягодицы и квадрицепс"},
+    {id:"sumo_dl",       name:"Сумо становая",            last:30, prev:{w:130,r:5,s:3},  equip:["barbell"],                                           grips:["straight","reverse"],                        notes:"Широкая постановка — приводящие и ягодицы"},
+    {id:"rdl_legs",      name:"Румынская тяга",           last:20, prev:{w:100,r:10,s:3}, equip:["barbell","dumbbells"],                               grips:["straight","medium"],                         notes:"Бицепс бедра. Чувствуй растяжку"},
+    {id:"calf_raise",    name:"Подъём на носки",          last:15, prev:{w:80,r:15,s:4},  equip:["hammer","bodyweight","barbell"],                      grips:[],                                            notes:"Стоя — обе головки, сидя — камбаловидная"},
+    {id:"glute_bridge",  name:"Ягодичный мостик",         last:35, prev:{w:60,r:12,s:3},  equip:["barbell","bodyweight"],                              grips:["straight"],                                  notes:"Полное сокращение ягодиц в верхней точке"},
+  ],
+  "Пресс": [
+    {id:"crunch",        name:"Скручивания",              last:3,  prev:{w:0,r:20,s:3},   equip:["bodyweight"],                                        grips:[],                                            notes:"Верхний пресс. Не тяни за шею"},
+    {id:"cable_crunch",  name:"Скручивания на блоке",     last:25, prev:{w:15,r:15,s:3},  equip:["cable_rope"],                                        grips:["neutral"],                                   notes:"Можно добавлять вес — прогрессия"},
+    {id:"leg_raise",     name:"Подъём ног в висе",        last:48, prev:{w:0,r:12,s:3},   equip:["pullup_bar"],                                        grips:["medium","wide"],                             notes:"Нижний пресс. Без раскачки"},
+    {id:"plank",         name:"Планка",                   last:8,  prev:{w:0,r:60,s:3},   equip:["bodyweight"],                                        grips:[],                                            notes:"Статика. Время вместо повторений"},
+    {id:"ab_wheel",      name:"Ролик",                    last:65, prev:{w:0,r:10,s:3},   equip:["bodyweight"],                                        grips:["narrow"],                                    notes:"Высокая нагрузка на кор. Начинай с колен"},
+    {id:"russian_twist", name:"Русские скручивания",      last:20, prev:{w:10,r:20,s:3},  equip:["bodyweight","dumbbells"],                            grips:["neutral"],                                   notes:"Косые мышцы живота"},
+    {id:"rev_crunch",    name:"Обратные скручивания",     last:30, prev:{w:0,r:15,s:3},   equip:["bodyweight"],                                        grips:[],                                            notes:"Нижний пресс. Таз отрывается в верхней точке"},
+    {id:"side_plank",    name:"Боковая планка",           last:40, prev:{w:0,r:30,s:3},   equip:["bodyweight"],                                        grips:[],                                            notes:"Косые и квадратная мышца поясницы"},
+  ],
+};
+
+function prevOf(id) {
+  for (const group of Object.values(EXERCISES)) {
+    const found = group.find(e => e.id === id);
+    if (found) return found.prev;
+  }
+  return {w:60, r:8, s:3};
+}
+function exGrips(ex) {
+  if (!ex.grips || ex.grips.length === 0) return GRIPS_LIST;
+  return GRIPS_LIST.filter(g => ex.grips.includes(g.id));
+}
+function exEquip(ex) {
+  if (!ex.equip || ex.equip.length === 0) return EQUIPMENT_LIST;
+  return EQUIPMENT_LIST.filter(e => ex.equip.includes(e.id));
+}
+
+
+const SUPPS_DATA = [
+  {name:"Креатин",   dose:"5г",      timing:"Утром",            tag:"СИЛА",    col:"#C8FF00"},
+  {name:"Протеин",   dose:"30г",     timing:"После тренировки", tag:"МАССА",   col:"#06B6D4"},
+  {name:"Омега-3",   dose:"2г",      timing:"С едой",           tag:"ЗДОРОВЬЕ",col:"#FF6B35"},
+  {name:"Витамин D", dose:"5000 МЕ", timing:"Утром",            tag:"ЗДОРОВЬЕ",col:"#FF6B35"},
+  {name:"Магний",    dose:"400мг",   timing:"На ночь",          tag:"СОН",     col:"#a855f7"},
+  {name:"Цинк",      dose:"25мг",    timing:"На ночь",          tag:"ТЕСТ",    col:"#a855f7"},
+];
+
+const PROGRAMS = [
+  {id:1, name:"5/3/1 BBB",          author:"Джим Вендлер",    days:4, weeks:16, goal:"сила + масса", level:"средний",     tags:["натурал ✓","с ГЗТ — лучше"],        hl:"green"},
+  {id:2, name:"Texas Method",       author:"Марк Риппето",    days:3, weeks:8,  goal:"сила",         level:"начинающий",  tags:["натурал ✓"],                          hl:"green"},
+  {id:3, name:"Sheiko #37",         author:"Борис Шейко",     days:4, weeks:12, goal:"сила",         level:"средний",     tags:["натурал ✓","с ГЗТ — лучше"],        hl:"green"},
+  {id:4, name:"Push Pull Legs",     author:"Классика",         days:6, weeks:8,  goal:"масса",        level:"средний",     tags:["натурал ✓","с ГЗТ — лучше"],        hl:"green"},
+  {id:5, name:"ГЗТ Протокол А",    author:"Спорт. медицина", days:4, weeks:12, goal:"сила + масса", level:"продвинутый", tags:["предпочтительно с ГЗТ","🖤 тёмная"], hl:"orange"},
+  {id:6, name:"ХАРДКОР МАССОНАБОР",author:"Элита",            days:5, weeks:20, goal:"масса",        level:"элита",       tags:["🖤 только тёмная сторона"],           hl:"dark"},
+];
+
+// ─────────────── STATE ───────────────
+const State = {
+  tab: "workout",
+  diary: {
+    stage: "browse",   // browse | build | active
+    muscles: [],
+    selections: {},    // { muscle: [exId, ...] }
+    workout: [],
+    activeIdx: 0,
+  },
+  supps: SUPPS_DATA.map((s, i) => ({...s, on: i === 0 || i === 1 || i === 3 || i === 5})),
+  darkUnlocked: false,
+  modal: null,         // { type, data }
+  timer: { on: false, sec: 0, _iv: null },
+  filterDays: null,
+  filterGoal: null,
+  showForgotten: true,
+};
+
+// ─────────────── HELPERS ───────────────
+function fmt(s) {
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+function workTonnage(ex) {
+  return ex.sets.filter(s => s.type === 'work').reduce((a, s) => a + s.weight * s.reps, 0);
+}
+function prevTonnage(ex) {
+  const p = prevOf(ex.id);
+  return p.w * p.r * p.s;
+}
+function tonnageDiff(ex) {
+  const wt = workTonnage(ex);
+  const ws = ex.sets.filter(s => s.type === 'work');
+  if (!wt || ws.length < prevOf(ex.id).s) return null;
+  return wt - prevTonnage(ex);
+}
+function isRegress(ex) {
+  const d = tonnageDiff(ex);
+  return d !== null && d < -(prevTonnage(ex) * 0.05);
+}
+function hlColor(hl) {
+  return hl === 'dark' ? 'var(--pu)' : hl === 'orange' ? 'var(--or)' : 'var(--ac)';
+}
+function tagColor(t) {
+  if (t.includes('🖤')) return 'var(--pu)';
+  if (t.includes('ГЗТ') || t.includes('предпочт')) return 'var(--or)';
+  return 'var(--ac)';
+}
+
+// ─────────────── APP ───────────────
+const App = {
+  nav(tab) {
+    State.tab = tab;
+    document.querySelectorAll('.nav button').forEach(b => {
+      b.classList.toggle('active', b.id === 'nav-' + tab);
+    });
+    this.render();
+  },
+
+  render() {
+    const sc = document.getElementById('screen');
+    sc.innerHTML = '';
+    sc.className = 'fadein';
+    if (State.tab === 'workout')  sc.innerHTML = Screens.workout();
+    if (State.tab === 'home')     sc.innerHTML = Screens.home();
+    if (State.tab === 'programs') sc.innerHTML = Screens.programs();
+    if (State.tab === 'bio')      sc.innerHTML = Screens.bio();
+    this.renderModal();
+  },
+
+  renderModal() {
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    if (!State.modal) return;
+    const fn = {swap: Modals.swap, note: Modals.note, regress: Modals.regress, program: Modals.program, dark: Modals.dark};
+    if (fn[State.modal.type]) root.innerHTML = fn[State.modal.type]();
+  },
+
+  closeModal() {
+    State.modal = null;
+    document.getElementById('modal-root').innerHTML = '';
+  },
+
+  timerToggle() {
+    const t = State.timer;
+    if (t.on) {
+      clearInterval(t._iv);
+      t.on = false;
+    } else {
+      t.on = true;
+      t._iv = setInterval(() => {
+        t.sec++;
+        const el = document.getElementById('timer-display');
+        if (el) el.textContent = '⏸ ' + fmt(t.sec);
+      }, 1000);
+    }
+    App.render();
+  },
+
+  timerReset() {
+    clearInterval(State.timer._iv);
+    State.timer = {on: false, sec: 0, _iv: null};
+    App.render();
+  },
+};
+
+// ─────────────── DIARY ACTIONS ───────────────
+const Diary = {
+  toggleMuscle(m) {
+    const ms = State.diary.muscles;
+    State.diary.muscles = ms.includes(m) ? ms.filter(x => x !== m) : [...ms, m];
+    App.render();
+  },
+
+  toggleExercise(muscle, exId) {
+    const sel = State.diary.selections;
+    const cur = sel[muscle] || [];
+    sel[muscle] = cur.includes(exId) ? cur.filter(x => x !== exId) : [...cur, exId];
+    App.render();
+  },
+
+  buildWorkout() {
+    const blocks = [];
+    State.diary.muscles.forEach(muscle => {
+      (State.diary.selections[muscle] || []).forEach(exId => {
+        const ex = (EXERCISES[muscle] || []).find(e => e.id === exId);
+        if (ex) blocks.push({
+          id: ex.id, name: ex.name, muscle,
+          grip: (ex.grips && ex.grips[0]) || 'medium', equip: (ex.equip && ex.equip[0]) || 'barbell', tut: 'normal',
+          sets: [], note: '',
+        });
+      });
+    });
+    if (!blocks.length) return;
+    State.diary.workout = blocks;
+    State.diary.activeIdx = 0;
+    State.diary.stage = 'active';
+    App.render();
+  },
+
+  addSet(type) {
+    const ex = State.diary.workout[State.diary.activeIdx];
+    const lastWork = [...ex.sets].reverse().find(s => s.type === 'work');
+    const p = prevOf(ex.id);
+    ex.sets.push({
+      type,
+      weight: lastWork ? lastWork.weight : p.w,
+      reps:   lastWork ? lastWork.reps   : p.r,
+      rpe: null,
+      stim: 'Обычная',
+    });
+    App.render();
+  },
+
+  updateSet(si, field, val) {
+    State.diary.workout[State.diary.activeIdx].sets[si][field] = val;
+    App.render();
+  },
+
+  updateExField(field, val) {
+    State.diary.workout[State.diary.activeIdx][field] = val;
+    App.render();
+  },
+
+  removeSet(si) {
+    State.diary.workout[State.diary.activeIdx].sets.splice(si, 1);
+    App.render();
+  },
+
+  cycleSetType(si) {
+    const types = ['warmup', 'leadup', 'work'];
+    const ex = State.diary.workout[State.diary.activeIdx];
+    const cur = ex.sets[si].type;
+    ex.sets[si].type = types[(types.indexOf(cur) + 1) % types.length];
+    App.render();
+  },
+
+  goTo(idx) {
+    State.diary.activeIdx = idx;
+    App.render();
+  },
+
+  swapExercise(newId, muscle) {
+    const newEx = (EXERCISES[muscle] || []).find(e => e.id === newId);
+    if (!newEx) return;
+    State.diary.workout[State.diary.activeIdx] = {
+      id: newEx.id, name: newEx.name, muscle,
+      grip: (newEx.grips && newEx.grips[0]) || 'medium', equip: (newEx.equip && newEx.equip[0]) || 'barbell', tut: 'normal',
+      sets: [], note: '',
+    };
+    App.closeModal();
+    App.render();
+  },
+
+  saveNote(txt) {
+    State.diary.workout[State.diary.activeIdx].note = txt;
+    App.closeModal();
+    App.render();
+  },
+
+  finish() {
+    const total = State.diary.workout.reduce((a, e) => a + workTonnage(e), 0);
+    alert('Тренировка завершена! 💪\nТоннаж: ' + total + ' кг\n\nОтличная работа!');
+    State.diary.stage = 'browse';
+    State.diary.muscles = [];
+    State.diary.selections = {};
+    State.diary.workout = [];
+    State.diary.activeIdx = 0;
+    App.render();
+  },
+};
+
+// ─────────────── SCREENS ───────────────
+const Screens = {
+  workout() {
+    if (State.diary.stage === 'build')  return this.workoutBuild();
+    if (State.diary.stage === 'active') return this.workoutActive();
+    return this.workoutBrowse();
+  },
+
+  workoutBrowse() {
+    const forgotten = [];
+    Object.entries(EXERCISES).forEach(([muscle, exs]) => {
+      exs.filter(e => e.last > 30).forEach(e => forgotten.push({...e, muscle}));
+    });
+
+    let html = '';
+    html += '<div style="margin-bottom:24px">';
+    html += '<span class="lbl">СЕГОДНЯ · ПЯТНИЦА</span>';
+    html += '<div class="ttl" style="margin-bottom:6px;font-size:36px">ТРЕНИРОВКА</div>';
+    html += '<div style="font-size:12px;color:var(--sb)">Выбери упражнения и начни</div>';
+    html += '</div>';
+    // Big prominent start button
+    html += '<div style="margin-bottom:20px">';
+    html += '<button onclick="State.diary.stage=\'build\';App.render()" style="width:100%;background:linear-gradient(135deg,#d4a843,#a07830);border:none;border-radius:14px;padding:22px 20px;cursor:pointer;font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:#1a1410;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:12px">';
+    html += '<svg width="24" height="24" viewBox="0 0 24 24" fill="#1a1410" style="flex-shrink:0"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    html += 'НАЧАТЬ ТРЕНИРОВКУ';
+    html += '</button>';
+    html += '</div>';
+
+    if (forgotten.length > 0 && State.showForgotten) {
+      html += '<div style="background:#1a1815;border:1px solid rgba(196,154,42,.2);border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+      html += '<div><span class="lbl" style="color:var(--am)">⏰ ДАВНО НЕ ДЕЛАЛ</span><div style="font-size:13px;font-weight:700">Забытые упражнения</div></div>';
+      html += '<button onclick="State.showForgotten=false;App.render()" style="background:none;border:none;color:var(--sb);cursor:pointer;font-size:20px;line-height:1">✕</button>';
+      html += '</div>';
+      forgotten.slice(0, 4).forEach(e => {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(245,158,11,.1)">';
+        html += '<div><div style="font-size:12px;font-weight:600;color:var(--tx)">' + e.name + '</div>';
+        html += '<div style="font-size:10px;color:var(--sb)">' + e.muscle + ' · ' + e.last + ' дней назад</div></div>';
+        html += '<div style="font-size:10px;color:var(--am);text-align:right;max-width:110px;line-height:1.4">1–2 сета для общего развития</div>';
+        html += '</div>';
+      });
+      html += '<div style="font-size:10px;color:var(--sb);margin-top:10px;line-height:1.6">Может забыл? Или сейчас не в целях — без проблем.</div>';
+      html += '</div>';
+    }
+
+    html += '<span class="lbl" style="margin-top:4px">ВСЕ УПРАЖНЕНИЯ</span>';
+    Object.entries(EXERCISES).forEach(([muscle, exs]) => {
+      html += '<div style="margin-bottom:16px">';
+      html += '<div style="font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:8px">' + muscle.toUpperCase() + '</div>';
+      exs.forEach(ex => {
+        const p = prevOf(ex.id);
+        const f = ex.last > 30;
+        html += '<div style="background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:10px 14px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">';
+        html += '<div><span style="font-size:13px;font-weight:600;color:var(--tx)">' + ex.name + '</span>';
+        if (f) html += '<span style="font-size:9px;color:var(--am);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 6px;margin-left:6px">ДАВНО</span>';
+        html += '</div>';
+        html += '<div style="font-size:10px;color:var(--sb)">' + p.w + 'кг×' + p.r + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  },
+
+  workoutBuild() {
+    const sel = State.diary.selections;
+    const active = State.diary.muscles;
+    const total = Object.values(sel).flat().length;
+
+    let html = '<button class="btn btn-ghost" style="margin-bottom:16px" onclick="State.diary.stage=\'browse\';App.render()">‹ Назад</button>';
+    html += '<span class="lbl">КОНСТРУКТОР</span>';
+    html += '<div class="ttl" style="margin-bottom:4px">Что тренируем?</div>';
+    html += '<div style="font-size:12px;color:var(--sb);margin-bottom:18px">Мышцы → упражнения</div>';
+
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">';
+    MUSCLES.forEach(m => {
+      const cnt = (sel[m] || []).length;
+      const on = active.includes(m);
+      html += '<button class="chip' + (on ? ' active' : '') + '" onclick="Diary.toggleMuscle(\'' + m + '\')">' + m;
+      if (cnt > 0) html += '<span style="background:var(--ac);color:#000;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">' + cnt + '</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+
+    active.forEach(muscle => {
+      html += '<div style="margin-bottom:16px">';
+      html += '<div style="font-size:9px;color:var(--ac);letter-spacing:2px;margin-bottom:8px">' + muscle.toUpperCase() + '</div>';
+      (EXERCISES[muscle] || []).forEach(ex => {
+        const selected = (sel[muscle] || []).includes(ex.id);
+        const f = ex.last > 30;
+        const p = prevOf(ex.id);
+        html += '<button style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid ' + (selected ? 'var(--ac)' : 'var(--br)') + ';background:' + (selected ? 'var(--ad)' : 'var(--sf)') + ';text-align:left;cursor:pointer;font-family:inherit;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center" onclick="Diary.toggleExercise(\'' + muscle + '\',\'' + ex.id + '\')">';
+        html += '<div><div style="font-size:13px;font-weight:600;color:' + (selected ? 'var(--ac)' : '#ccc') + '">' + ex.name;
+        if (f) html += '<span style="font-size:9px;color:var(--am);border:1px solid rgba(245,158,11,.25);border-radius:4px;padding:1px 5px;margin-left:6px">ДАВНО</span>';
+        html += '</div><div style="font-size:10px;color:var(--sb);margin-top:2px">Прошлый: ' + p.w + 'кг×' + p.r + ' · ' + p.s + ' подх</div></div>';
+        html += '<div style="width:22px;height:22px;border-radius:50%;border:1.5px solid ' + (selected ? 'var(--ac)' : '#333') + ';background:' + (selected ? 'var(--ac)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;color:' + (selected ? '#000' : '#333') + ';flex-shrink:0">' + (selected ? '✓' : '') + '</div>';
+        html += '</button>';
+      });
+      html += '</div>';
+    });
+
+    if (total > 0) {
+      html += '<button class="btn btn-accent btn-full" style="border-radius:14px;font-size:14px;margin-top:8px" onclick="Diary.buildWorkout()">▶ Начать — ' + total + ' упражнений</button>';
+    }
+    return html;
+  },
+
+  workoutActive() {
+    const d = State.diary;
+    const ex = d.workout[d.activeIdx];
+    if (!ex) return '';
+
+    const wSets  = ex.sets.filter(s => s.type === 'work');
+    const wmSets = ex.sets.filter(s => s.type === 'warmup');
+    const ldSets = ex.sets.filter(s => s.type === 'leadup');
+    const wTon   = workTonnage(ex);
+    const pTon   = prevTonnage(ex);
+    const diff   = tonnageDiff(ex);
+    const rg     = isRegress(ex);
+    const t      = State.timer;
+    const p      = prevOf(ex.id);
+
+    let html = '';
+
+    // Header
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
+    html += '<div><span class="lbl">УПР ' + (d.activeIdx+1) + '/' + d.workout.length + ' · ' + ex.muscle.toUpperCase() + '</span>';
+    html += '<div class="ttl" style="font-size:26px">' + ex.name + '</div></div>';
+    html += '<button class="btn btn-surface" style="font-size:11px;margin-top:4px" onclick="State.modal={type:\'swap\',data:{muscle:\'' + ex.muscle + '\',exId:\'' + ex.id + '\'}};App.renderModal()">⇄ Замена</button>';
+    html += '</div>';
+
+    if (ex.note) {
+      html += '<div style="font-size:11px;color:var(--sb);margin-bottom:8px;font-style:italic">💬 ' + ex.note + '</div>';
+    }
+
+    // Params — get exercise-specific options
+    const exData = Object.values(EXERCISES).flat().find(e => e.id === ex.id);
+    const availGrips = exData ? exGrips(exData) : GRIPS_LIST;
+    const availEquip = exData ? exEquip(exData) : EQUIPMENT_LIST;
+
+    html += '<div class="card" style="padding:12px 14px;margin-bottom:10px">';
+    html += '<span class="lbl">ПАРАМЕТРЫ УПРАЖНЕНИЯ</span>';
+    if (exData && exData.notes) {
+      html += '<div style="font-size:10px;color:#7a8a6a;margin-bottom:10px;line-height:1.5">💡 ' + exData.notes + '</div>';
+    }
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+
+    // Grip selector
+    if (availGrips.length > 0) {
+      html += '<div><div style="font-size:9px;color:var(--sb);margin-bottom:4px">ХВАТ</div>';
+      html += '<select onchange="Diary.updateExField(\'grip\',this.value)" style="width:100%;font-size:10px">';
+      availGrips.forEach(g => { html += '<option value="' + g.id + '"' + (ex.grip === g.id ? ' selected' : '') + '>' + g.name + '</option>'; });
+      html += '</select></div>';
+    }
+
+    // Equipment selector
+    if (availEquip.length > 0) {
+      html += '<div><div style="font-size:9px;color:var(--sb);margin-bottom:4px">СНАРЯД</div>';
+      html += '<select onchange="Diary.updateExField(\'equip\',this.value)" style="width:100%;font-size:10px">';
+      availEquip.forEach(g => { html += '<option value="' + g.id + '"' + (ex.equip === g.id ? ' selected' : '') + '>' + g.name + '</option>'; });
+      html += '</select></div>';
+    }
+
+    html += '</div>';
+
+    // TUT selector (full width)
+    html += '<div><div style="font-size:9px;color:var(--sb);margin-bottom:4px">ВРЕМЯ ПОД НАГРУЗКОЙ</div>';
+    html += '<select onchange="Diary.updateExField(\'tut\',this.value)" style="width:100%;font-size:10px">';
+    TUT_LIST.forEach(t => { html += '<option value="' + t.id + '"' + (ex.tut === t.id ? ' selected' : '') + '>' + t.name + '</option>'; });
+    html += '</select></div>';
+
+    // Show current combo as history key
+    const gripName = availGrips.find(g => g.id === ex.grip);
+    const equipName = availEquip.find(g => g.id === ex.equip);
+    const tutName = TUT_LIST.find(t => t.id === ex.tut);
+    if (gripName || equipName || tutName) {
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--am)">⚡ История прогресса: ' + ex.name;
+      if (gripName) html += ' · ' + gripName.name;
+      if (equipName) html += ' · ' + equipName.name;
+      if (tutName && ex.tut !== 'normal') html += ' · ' + tutName.name;
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Prev result
+    html += '<div style="background:#171819;border:1px solid #2a2b2e;border-radius:10px;padding:10px 14px;margin-bottom:' + (rg ? '8px' : '10px') + ';display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><span class="lbl" style="color:#7a8a6a">ПРОШЛЫЙ РАЗ — ' + ex.name + '</span>';
+    html += '<div style="font-size:13px;color:#aaa">' + p.w + 'кг×' + p.r + ' · ' + p.s + ' подх = <span style="color:var(--ac)">' + pTon + 'кг</span></div></div>';
+    if (diff !== null) {
+      html += '<div style="text-align:right"><div style="font-size:9px;letter-spacing:1px;color:' + (rg ? 'var(--re)' : '#4a6a4a') + '">' + (rg ? '▼ РЕГРЕСС' : '▲ ПРОГРЕСС') + '</div>';
+      html += '<div style="font-size:18px;font-weight:700;color:' + (rg ? 'var(--re)' : 'var(--ac)') + '">' + (diff > 0 ? '+' : '') + diff + 'кг</div></div>';
+    }
+    html += '</div>';
+
+    // Regress button
+    if (rg) {
+      html += '<button onclick="State.modal={type:\'regress\'};App.renderModal()" style="width:100%;background:#1c1415;border:1px solid rgba(192,57,43,.3);border-radius:10px;padding:10px 14px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><div style="font-size:10px;color:var(--re);letter-spacing:2px;margin-bottom:2px">⚠ АНАЛИЗ РЕГРЕССА</div>';
+      html += '<div style="font-size:11px;color:#888">Отметить причину — сон, стресс, усталость</div></div>';
+      html += '<span style="color:var(--re);font-size:18px">›</span></button>';
+    }
+
+    // Sets table
+    html += '<div class="card" style="padding:14px;margin-bottom:10px">';
+    html += '<div style="display:grid;grid-template-columns:20px 44px 1fr 1fr 68px 46px 20px;gap:5px;margin-bottom:7px;font-size:9px;color:#444;letter-spacing:1px;align-items:center">';
+    html += '<span>#</span><span>ТИП</span><span>ВЕС</span><span>ПОВТ</span><span>СТИМУЛ</span><span>RPE</span><span></span></div>';
+
+    if (ex.sets.length === 0) {
+      html += '<div style="text-align:center;color:#333;font-size:12px;padding:14px 0">Добавь первый подход ↓</div>';
+    }
+
+    ex.sets.forEach((s, si) => {
+      const typeClass = s.type === 'work' ? 'stb-work' : s.type === 'warmup' ? 'stb-warmup' : 'stb-leadup';
+      const typeLabel = s.type === 'work' ? 'РАБ' : s.type === 'warmup' ? 'РАЗМ' : 'ПОДВ';
+
+      html += '<div style="display:grid;grid-template-columns:20px 44px 1fr 1fr 68px 46px 20px;gap:5px;align-items:center;padding:6px 0;border-bottom:1px solid #0f0f0f">';
+      html += '<span style="font-size:10px;color:#444">' + (si+1) + '</span>';
+      html += '<div class="stb ' + typeClass + '" onclick="Diary.cycleSetType(' + si + ')">' + typeLabel + '</div>';
+
+      // Weight
+      html += '<div class="nctrl">';
+      html += '<button class="ncbtn" onclick="Diary.updateSet(' + si + ',\'weight\',' + Math.max(0, s.weight-2.5) + ')">−</button>';
+      html += '<input class="ninput" type="number" value="' + s.weight + '" onchange="Diary.updateSet(' + si + ',\'weight\',+this.value)">';
+      html += '<button class="ncbtn" onclick="Diary.updateSet(' + si + ',\'weight\',' + (s.weight+2.5) + ')">+</button>';
+      html += '</div>';
+
+      // Reps
+      html += '<div class="nctrl">';
+      html += '<button class="ncbtn" onclick="Diary.updateSet(' + si + ',\'reps\',' + Math.max(1, s.reps-1) + ')">−</button>';
+      html += '<input class="ninput" type="number" value="' + s.reps + '" onchange="Diary.updateSet(' + si + ',\'reps\',+this.value)">';
+      html += '<button class="ncbtn" onclick="Diary.updateSet(' + si + ',\'reps\',' + (s.reps+1) + ')">+</button>';
+      html += '</div>';
+
+      // Stim + RPE (only for work sets)
+      if (s.type === 'work') {
+        html += '<select onchange="Diary.updateSet(' + si + ',\'stim\',this.value)" style="font-size:9px">';
+        STIMS.forEach(st => { html += '<option' + (s.stim === st ? ' selected' : '') + '>' + st + '</option>'; });
+        html += '</select>';
+        const rpeStyle = s.rpe ? 'background:var(--ad);border-color:var(--ab);color:var(--ac)' : '';
+        html += '<select onchange="Diary.updateSet(' + si + ',\'rpe\',this.value?+this.value:null)" style="font-size:10px;' + rpeStyle + '">';
+        html += '<option value="">—</option>';
+        [6,7,8,9,10].forEach(n => { html += '<option value="' + n + '"' + (s.rpe === n ? ' selected' : '') + '>' + n + '</option>'; });
+        html += '</select>';
+      } else {
+        html += '<span></span><span></span>';
+      }
+
+      html += '<button onclick="Diary.removeSet(' + si + ')" style="background:none;border:none;color:#333;cursor:pointer;font-size:13px;padding:0">✕</button>';
+      html += '</div>';
+    });
+
+    if (wSets.length > 0) {
+      let info = '';
+      if (wmSets.length) info += wmSets.length + ' разм';
+      if (ldSets.length) info += (info ? ' · ' : '') + ldSets.length + ' подв';
+      info += (info ? ' · ' : '') + wSets.length + ' рабочих';
+      html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #111;display:flex;justify-content:space-between">';
+      html += '<div style="font-size:10px;color:var(--sb)">' + info + '</div>';
+      html += '<div style="font-size:15px;font-weight:700;color:var(--ac)">' + wTon + ' кг</div></div>';
+    }
+    html += '</div>';
+
+    // Add set buttons
+    html += '<div style="display:flex;gap:7px;margin-bottom:10px">';
+    html += '<button class="btn btn-surface" style="flex:1;font-size:10px;padding:10px 4px" onclick="Diary.addSet(\'warmup\')">+ Разминка</button>';
+    html += '<button class="btn" style="flex:1;font-size:10px;padding:10px 4px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--am)" onclick="Diary.addSet(\'leadup\')">+ Подводящий</button>';
+    html += '<button class="btn" style="flex:2;font-size:11px;padding:10px 6px;background:var(--ad);border:1px solid var(--ab);color:var(--ac)" onclick="Diary.addSet(\'work\')">+ Рабочий</button>';
+    html += '</div>';
+
+    // Tools
+    html += '<div style="display:flex;gap:7px;margin-bottom:14px">';
+    html += '<button class="btn btn-surface" style="flex:1;font-size:10px;padding:9px 6px" onclick="State.modal={type:\'note\'};App.renderModal()">💬 Заметка</button>';
+    const timerColor = t.on ? 'background:var(--ad);border:1px solid var(--ab);color:var(--ac)' : 'background:var(--s2);border:1px solid var(--br);color:var(--sb)';
+    html += '<button class="btn" style="flex:1;font-size:10px;padding:9px 6px;' + timerColor + '" onclick="App.timerToggle()">';
+    html += '<span id="timer-display">' + (t.on ? '⏸ ' + fmt(t.sec) : '⏱ Таймер') + '</span></button>';
+    if (t.on || t.sec > 0) {
+      html += '<button class="btn btn-surface" style="padding:9px 10px" onclick="App.timerReset()">↺</button>';
+    }
+    html += '</div>';
+
+    // Exercise navigation
+    html += '<div style="display:flex;gap:8px;margin-bottom:4px">';
+    if (d.activeIdx > 0) {
+      html += '<button class="btn btn-surface" style="flex:1;font-size:11px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:12px 8px" onclick="Diary.goTo(' + (d.activeIdx-1) + ')">‹ ' + d.workout[d.activeIdx-1].name + '</button>';
+    }
+    if (d.activeIdx < d.workout.length - 1) {
+      html += '<button class="btn" style="flex:2;background:var(--ad);border:1px solid var(--ab);color:var(--ac);font-size:11px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:12px 8px" onclick="Diary.goTo(' + (d.activeIdx+1) + ')">' + d.workout[d.activeIdx+1].name + ' ›</button>';
+    } else {
+      html += '<button class="btn btn-accent" style="flex:2;font-size:13px;border-radius:12px;padding:12px" onclick="Diary.finish()">✓ Завершить</button>';
+    }
+    html += '</div>';
+
+    // Dots
+    html += '<div class="dots">';
+    d.workout.forEach((w, i) => {
+      const cls = i === d.activeIdx ? 'dot-active' : (w.sets.length > 0 ? 'dot-done' : 'dot-idle');
+      html += '<button class="dot ' + cls + '" onclick="Diary.goTo(' + i + ')"></button>';
+    });
+    html += '</div>';
+
+    return html;
+  },
+
+  home() {
+    const wt = 33600, wtg = 55000, pct = Math.round(wt/wtg*100);
+    const days = [
+      {d:'Пн', done:true}, {d:'Вт', rest:true}, {d:'Ср', done:true},
+      {d:'Чт', rest:true}, {d:'Пт', today:true}, {d:'Сб'}, {d:'Вс', rest:true},
+    ];
+
+    let html = '<span class="lbl">СЕГОДНЯ · ПЯТНИЦА</span>';
+    html += '<div class="ttl" style="margin-bottom:4px;font-size:34px">Привет, Макс 👊</div>';
+    html += '<div style="font-size:12px;color:var(--sb);margin-bottom:20px">День A — тяжёлый</div>';
+    // Quick access bar instead of duplicate CTA
+    html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
+    html += '<button onclick="App.nav(\'workout\')" style="flex:2;background:var(--sf);border:1px solid var(--br2);border-top:1px solid #3a3b3e;border-radius:12px;padding:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px">';
+    html += '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round"><path d="M6 4v6M6 14v6M18 4v6M18 14v6M2 9h4M14 9h4M2 15h4M14 15h4M10 9v6"/></svg>';
+    html += '<div style="text-align:left"><div style="font-size:11px;font-weight:700;color:var(--tx2)">Открыть дневник</div><div style="font-size:10px;color:var(--sb)">День A сегодня</div></div>';
+    html += '</button>';
+    html += '<button onclick="App.nav(\'programs\')" style="flex:1;background:var(--sf);border:1px solid var(--br2);border-top:1px solid #3a3b3e;border-radius:12px;padding:14px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px">';
+    html += '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sb)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>';
+    html += '<div style="font-size:9px;color:var(--sb);letter-spacing:1px">ПРОГРАММЫ</div>';
+    html += '</button>';
+    html += '</div>';
+
+    html += '<div class="card">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">';
+    html += '<div><span class="lbl">ТОННАЖ НЕДЕЛИ</span><div style="font-size:28px;font-weight:700;color:var(--ac)">' + (wt/1000).toFixed(1) + '<span style="font-size:13px;color:#666">т</span></div></div>';
+    html += '<div style="text-align:right"><span class="lbl">ЦЕЛЬ</span><div style="font-size:16px;color:var(--mt)">' + (wtg/1000).toFixed(0) + 'т</div><div style="font-size:11px;color:#2a4a00">' + pct + '%</div></div>';
+    html += '</div>';
+    html += '<div class="pbar" style="margin-bottom:12px"><div class="pfil" style="width:' + pct + '%"></div></div>';
+    html += '<div class="wgrid">';
+    days.forEach(d => {
+      const bg = d.today ? 'rgba(200,255,0,.1)' : d.done ? '#1e1e20' : '#111';
+      const bc = d.today ? 'rgba(200,255,0,.4)' : 'var(--br)';
+      const col = d.today ? 'var(--ac)' : d.done ? '#a07830' : 'var(--mt)';
+      const icon = d.rest ? '💤' : d.today ? '▶' : d.done ? '✓' : '';
+      html += '<div class="wday"><div class="wblock" style="background:' + bg + ';border-color:' + bc + ';color:' + col + '">' + icon + '</div>';
+      html += '<span style="font-size:9px;color:' + (d.today ? 'var(--ac)' : 'var(--mt)') + '">' + d.d + '</span></div>';
+    });
+    html += '</div></div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">';
+    [{l:'ПОСЛЕДНЯЯ',v:'3 дня',u:'назад'},{l:'ДО ЦЕЛИ',v:'67%',u:'до 130кг жим'},{l:'ТРЕНИРОВОК',v:'142',u:'за всё время'},{l:'СЛЕД. ДЕНЬ',v:'Пятница',u:'День A'}].forEach(s => {
+      html += '<div class="card-sm"><span class="lbl">' + s.l + '</span><div style="font-size:22px;font-weight:700">' + s.v + '</div><div style="font-size:10px;color:var(--sb)">' + s.u + '</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div style="background:#171819;border:1px solid #2a2b2e;border-radius:12px;padding:14px">';
+    html += '<span class="lbl" style="color:#7a8a6a">◈ ИИ-ТРЕНЕР</span>';
+    html += '<div style="font-size:13px;color:#aaa;line-height:1.7">Жим растёт быстрее плана (+5кг/мес). Рекомендую добавить подход на следующей неделе.</div>';
+    html += '</div>';
+    return html;
+  },
+
+  programs() {
+    const fd = State.filterDays, fg = State.filterGoal;
+    const filtered = PROGRAMS.filter(p => (!fd || p.days === fd) && (!fg || p.goal.includes(fg)));
+
+    let html = '<span class="lbl">БАЗА ЗНАНИЙ</span>';
+    html += '<div class="ttl" style="margin-bottom:16px">Программы</div>';
+
+    html += '<span class="lbl">ДНИ В НЕДЕЛЮ</span>';
+    html += '<div style="display:flex;gap:7px;margin-bottom:14px">';
+    [null,3,4,5,6].forEach(d => {
+      const on = fd === d;
+      html += '<button class="btn" style="flex:1;padding:7px 0;border-radius:9px;border:1px solid ' + (on?'var(--ac)':'var(--br)') + ';background:' + (on?'var(--ad)':'var(--sf)') + ';color:' + (on?'var(--ac)':'var(--mt)') + '" onclick="State.filterDays=' + (d===null?'null':d) + ';App.render()">' + (d ?? 'Все') + '</button>';
+    });
+    html += '</div>';
+
+    html += '<span class="lbl">ЦЕЛЬ</span>';
+    html += '<div style="display:flex;gap:7px;margin-bottom:18px">';
+    [null,'сила','масса'].forEach(g => {
+      const on = fg === g;
+      html += '<button class="btn" style="flex:1;padding:7px 0;border-radius:9px;border:1px solid ' + (on?'var(--ac)':'var(--br)') + ';background:' + (on?'var(--ad)':'var(--sf)') + ';color:' + (on?'var(--ac)':'var(--mt)') + '" onclick="State.filterGoal=' + (g===null?'null':"'"+g+"'") + ';App.render()">' + (g ?? 'Все') + '</button>';
+    });
+    html += '</div>';
+
+    filtered.forEach(p => {
+      const hc = hlColor(p.hl);
+      html += '<button onclick="State.modal={type:\'program\',data:window._prog' + p.id + '};App.renderModal()" style="width:100%;background:' + (p.hl==='dark'?'#0d0814':'var(--sf)') + ';border:1px solid ' + (p.hl==='dark'?'#2d1a4a':'var(--br)') + ';border-left:3px solid ' + hc + ';border-radius:14px;padding:16px;cursor:pointer;text-align:left;font-family:inherit;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html += '<div><div style="font-size:15px;font-weight:700;color:' + (p.hl==='dark'?'#d8b4fe':'#fff') + ';margin-bottom:2px">' + p.name + '</div>';
+      html += '<div style="font-size:10px;color:var(--sb)">' + p.author + '</div></div>';
+      html += '<div style="text-align:right"><div style="font-size:22px;font-weight:900;color:' + hc + '">' + p.days + '<span style="font-size:10px;color:var(--sb)">дн</span></div>';
+      html += '<div style="font-size:10px;color:var(--sb)">' + p.weeks + ' нед</div></div></div>';
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      p.tags.forEach(tag => {
+        html += '<span style="font-size:9px;color:' + tagColor(tag) + ';border:1px solid ' + tagColor(tag) + '44;padding:2px 8px;border-radius:4px">' + tag + '</span>';
+      });
+      html += '</div></button>';
+    });
+
+    html += '<div style="background:#1a1614;border:1px solid rgba(184,92,56,.2);border-radius:12px;padding:14px 16px;margin-top:4px">';
+    html += '<span class="lbl" style="color:var(--or)">⚡ ТЕСТ СИЛЫ</span>';
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:4px">Раз в месяц — 1RM</div>';
+    html += '<div style="font-size:11px;color:var(--sb);line-height:1.6">Встроен в каждый цикл. ИИ сравнивает и корректирует нагрузку.</div></div>';
+    return html;
+  },
+
+  bio() {
+    let html = '<span class="lbl">ТВОЙ СТЕК</span>';
+    html += '<div class="ttl" style="margin-bottom:16px">Биохакинг</div>';
+
+    html += '<div style="background:#171819;border:1px solid #2a2b2e;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;gap:12px">';
+    html += '<span style="font-size:18px">◈</span><div>';
+    html += '<span class="lbl" style="color:#7a8a6a">ИИ-РЕКОМЕНДАЦИЯ</span>';
+    html += '<div style="font-size:12px;color:#888;line-height:1.6">На силовом цикле добавь бета-аланин 3.2г/день — буферизирует лактат при высоком RPE.</div>';
+    html += '</div></div>';
+
+    html += '<span class="lbl">ДОБАВКИ</span>';
+    State.supps.forEach((s, i) => {
+      html += '<div onclick="State.supps[' + i + '].on=!State.supps[' + i + '].on;App.render()" style="background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;opacity:' + (s.on?1:.45) + '">';
+      html += '<div class="tgl' + (s.on?' on':'') + '" style="background:' + (s.on?s.col+'33':'#111') + ';border:1.5px solid ' + (s.on?s.col:'#222') + '">';
+      html += '<div class="tknob" style="background:' + (s.on?s.col:'#333') + ';left:' + (s.on?'21px':'3px') + '"></div></div>';
+      html += '<div style="flex:1"><div style="display:flex;align-items:center;gap:7px;margin-bottom:2px">';
+      html += '<span style="font-size:14px;font-weight:700;color:' + (s.on?'#fff':'#444') + '">' + s.name + '</span>';
+      html += '<span style="font-size:8px;color:' + s.col + ';border:1px solid ' + s.col + '44;padding:1px 5px;border-radius:4px;letter-spacing:1px">' + s.tag + '</span>';
+      html += '</div><div style="font-size:11px;color:var(--sb)">' + s.dose + ' · ' + s.timing + '</div></div></div>';
+    });
+
+    html += '<div style="height:1px;background:#111;margin:16px -20px"></div>';
+    html += '<button onclick="State.modal={type:\'dark\'};App.renderModal()" style="width:100%;background:linear-gradient(135deg,#0d0814,#150d20);border:1px solid #3d1a5a;border-radius:14px;padding:18px 20px;cursor:pointer;text-align:left;font-family:inherit;display:flex;align-items:center;gap:16px;margin-top:16px">';
+    html += '<div style="width:48px;height:48px;border-radius:12px;background:#1a0a2a;border:1px solid #4c1d95;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🖤</div>';
+    html += '<div><div style="font-size:9px;color:var(--pu);letter-spacing:3px;margin-bottom:5px">ELITE · ЗАКРЫТЫЙ</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#d8b4fe;margin-bottom:4px">Тёмная сторона</div>';
+    html += '<div style="font-size:11px;color:#666">ГЗТ · Курсы · Пептиды · Анализы</div></div>';
+    html += '<span style="color:#333;font-size:20px;margin-left:auto">›</span></button>';
+    return html;
+  },
+};
+
+// ─────────────── MODALS ───────────────
+const Modals = {
+  swap() {
+    const {muscle, exId} = State.modal.data;
+    const alts = (EXERCISES[muscle] || []).filter(e => e.id !== exId);
+    let html = '<div class="modal-wrap"><div class="modal-hdr">';
+    html += '<div><span class="lbl">ЗАМЕНА · ' + muscle + '</span><div style="font-size:16px;font-weight:700">Выбери альтернативу</div></div>';
+    html += '<button class="modal-close" onclick="App.closeModal()">✕</button></div>';
+    html += '<div class="modal-body">';
+    alts.forEach(ex => {
+      const p = prevOf(ex.id);
+      html += '<button onclick="Diary.swapExercise(\'' + ex.id + '\',\'' + muscle + '\')" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--br);background:var(--sf);text-align:left;cursor:pointer;font-family:inherit;margin-bottom:8px">';
+      html += '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">' + ex.name + '</div>';
+      html += '<div style="font-size:10px;color:var(--sb)">Прошлый: ' + p.w + 'кг×' + p.r + ' · ' + p.s + ' подх</div></button>';
+    });
+    html += '</div></div>';
+    return html;
+  },
+
+  note() {
+    return '<div class="modal-wrap"><div class="modal-hdr"><div style="font-size:16px;font-weight:700">💬 Заметка к упражнению</div><button class="modal-close" onclick="App.closeModal()">✕</button></div><div class="modal-body" style="display:flex;flex-direction:column;gap:12px"><textarea id="note-input" style="height:140px" placeholder="Держать лопатки, следить за локтями..."></textarea><div style="display:flex;gap:10px"><button class="btn btn-surface" style="flex:1;padding:12px" onclick="App.closeModal()">Отмена</button><button class="btn btn-accent" style="flex:2;padding:12px;border-radius:12px" onclick="Diary.saveNote(document.getElementById(\'note-input\').value)">Сохранить</button></div></div></div>';
+  },
+
+  regress() {
+    const reasons = [
+      {i:'😴', l:'Плохой сон',          h:'Менее 6–7 часов или плохое качество'},
+      {i:'🧠', l:'Высокий стресс',       h:'Работа, личное — голова занята'},
+      {i:'💪', l:'Недовосстановление',   h:'Мышцы ещё болят с прошлой тренировки'},
+      {i:'🍕', l:'Мало ел',             h:'Не хватило энергии перед тренировкой'},
+      {i:'❓', l:'Просто плохой день',   h:'Бывает — не грузись'},
+    ];
+    let html = '<div class="modal-wrap"><div class="modal-hdr"><div style="font-size:16px;font-weight:700;color:var(--re)">⚠ Почему регресс?</div><button class="modal-close" onclick="App.closeModal()">✕</button></div>';
+    html += '<div class="modal-body"><div style="font-size:13px;color:#aaa;margin-bottom:20px;line-height:1.7">Отметь причину — ИИ учтёт при следующем анализе. Необязательно.</div>';
+    reasons.forEach(r => {
+      html += '<button onclick="alert(\'Записано: ' + r.l + '\');App.closeModal()" style="width:100%;background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:14px">';
+      html += '<span style="font-size:22px">' + r.i + '</span><div><div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px">' + r.l + '</div><div style="font-size:11px;color:var(--sb)">' + r.h + '</div></div></button>';
+    });
+    html += '</div></div>';
+    return html;
+  },
+
+  program() {
+    const p = State.modal.data;
+    const hc = hlColor(p.hl);
+    let html = '<div class="modal-wrap"><div class="modal-hdr"><button class="modal-close" onclick="App.closeModal()">‹ Назад</button></div>';
+    html += '<div class="modal-body">';
+    html += '<div style="background:' + (p.hl==='dark'?'#0d0814':'var(--sf)') + ';border:1px solid ' + (p.hl==='dark'?'#3d1a5a':'var(--br)') + ';border-radius:16px;padding:20px;margin-bottom:14px">';
+    html += '<div style="font-size:24px;font-weight:700;color:' + (p.hl==='dark'?'#d8b4fe':'#fff') + ';margin-bottom:4px">' + p.name + '</div>';
+    html += '<div style="font-size:11px;color:var(--sb);margin-bottom:16px">' + p.author + '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+    [['ДНИ',p.days],['НЕДЕЛЬ',p.weeks],['УРОВЕНЬ',p.level]].forEach(([l,v]) => {
+      html += '<div style="background:#111;border-radius:10px;padding:10px;text-align:center"><span class="lbl">' + l + '</span><div style="font-size:14px;font-weight:700">' + v + '</div></div>';
+    });
+    html += '</div>';
+    html += '<span class="lbl">СОВМЕСТИМОСТЬ</span>';
+    html += '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px">';
+    p.tags.forEach(t => {
+      html += '<span style="font-size:10px;color:' + tagColor(t) + ';border:1px solid ' + tagColor(t) + '55;padding:4px 10px;border-radius:6px">' + t + '</span>';
+    });
+    html += '</div>';
+    html += '<span class="lbl">СТРУКТУРА НЕДЕЛИ</span>';
+    html += '<div style="display:flex;gap:5px">';
+    ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach((day, i) => {
+      const tr = i < p.days;
+      html += '<div style="flex:1;text-align:center"><div style="height:32px;border-radius:7px;margin-bottom:4px;background:' + (tr?(p.hl==='dark'?'rgba(168,85,247,.15)':'var(--ad)'):'#111') + ';border:1px solid ' + (tr?(p.hl==='dark'?'rgba(168,85,247,.3)':'var(--ab)'):'var(--br)') + ';display:flex;align-items:center;justify-content:center;font-size:10px;color:' + (tr?hc:'#222') + '">' + (tr?'●':'·') + '</div>';
+      html += '<span style="font-size:8px;color:#333">' + day + '</span></div>';
+    });
+    html += '</div></div>';
+    html += '<button onclick="alert(\'Программа «' + p.name + '» добавлена!\')" style="width:100%;padding:16px;border-radius:14px;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;background:' + (p.hl==='dark'?'linear-gradient(135deg,#4c1d95,#6d28d9)':'linear-gradient(135deg,var(--ac),#a8d900)') + ';color:' + (p.hl==='dark'?'#fff':'#000') + '">' + (p.hl==='dark'?'🖤 Начать':'▶ Начать программу') + '</button>';
+    html += '</div></div>';
+    return html;
+  },
+
+  dark() {
+    if (!State.darkUnlocked) {
+      return '<div class="modal-wrap" style="justify-content:center;align-items:center"><div style="padding:40px 28px;text-align:center;max-width:360px"><div style="font-size:56px;margin-bottom:20px">🖤</div><div style="font-size:22px;font-weight:700;margin-bottom:8px">Тёмная сторона</div><div style="font-size:12px;color:#555;line-height:1.8;margin-bottom:28px">Образовательный раздел о фармакологии и спортивной медицине.<br><br>Информация предоставляется исключительно в образовательных целях. Вы принимаете решения самостоятельно.</div><button onclick="State.darkUnlocked=true;App.renderModal()" style="background:linear-gradient(135deg,#4c1d95,#6d28d9);border:none;border-radius:12px;padding:14px 32px;color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;margin-bottom:12px">Я понимаю · Войти</button><button onclick="App.closeModal()" style="background:none;border:none;color:#333;font-size:12px;cursor:pointer;font-family:inherit">Отмена</button></div></div>';
+    }
+    const items = [
+      {i:'◈', t:'ГЗТ / ТРТ',            d:'Протоколы, мониторинг, дозировки', c:'#a855f7'},
+      {i:'◎', t:'Курсовое планирование', d:'Длительность, ПКТ, восстановление', c:'#9333ea'},
+      {i:'◇', t:'Пептиды',               d:'Стеки, тайминг, совместимость',     c:'#7c3aed'},
+      {i:'⬡', t:'Анализы крови',         d:'Что сдавать, нормы для атлетов',   c:'#6d28d9'},
+      {i:'▣', t:'Антиэстрогены / САРМ',  d:'Дозировки, протоколы',             c:'#5b21b6'},
+    ];
+    let html = '<div class="modal-wrap"><div class="modal-hdr"><div><div style="font-size:9px;color:var(--pu);letter-spacing:3px;margin-bottom:4px">ELITE · ЗАКРЫТЫЙ</div><div style="font-size:20px;font-weight:700">🖤 Тёмная сторона</div></div><button class="modal-close" onclick="App.closeModal()">✕</button></div>';
+    html += '<div class="modal-body"><div style="background:#0d0814;border:1px solid #2d1a4a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:#6d28d9;line-height:1.5">⚠️ Образовательный формат. Проконсультируйтесь с врачом.</div>';
+    items.forEach(it => {
+      html += '<div style="background:#0a0810;border:1px solid #1a1025;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px">';
+      html += '<div style="width:40px;height:40px;border-radius:10px;background:' + it.c + '22;border:1px solid ' + it.c + '44;display:flex;align-items:center;justify-content:center;font-size:18px;color:' + it.c + ';flex-shrink:0">' + it.i + '</div>';
+      html += '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:2px">' + it.t + '</div><div style="font-size:11px;color:#444">' + it.d + '</div></div>';
+      html += '<span style="color:#333;font-size:18px">›</span></div>';
+    });
+    html += '</div></div>';
+    return html;
+  },
+};
+
+// Store program data globally for modal access
+PROGRAMS.forEach(p => { window['_prog' + p.id] = p; });
+
+// ─────────────── START ───────────────
+App.render();
+</script>
+</body>
+</html>
